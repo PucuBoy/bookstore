@@ -1,7 +1,8 @@
+// pages/admin-dashboard.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-export default function Books() {
+export default function AdminDashboard() {
   const router = useRouter();
   const [books, setBooks] = useState([]);
   const [form, setForm] = useState({ title: '', author: '', year: '', price: '' });
@@ -9,12 +10,22 @@ export default function Books() {
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
+    const savedRole = localStorage.getItem('role');
+
+    // Cek apakah user belum login
     if (!savedToken) {
       router.push('/login');
-    } else {
-      setToken(savedToken);
-      fetchBooks(savedToken);
+      return;
     }
+
+    // Cek role, jika bukan admin redirect ke user
+    if (savedRole !== 'admin') {
+      router.push('/user-dashboard');
+      return;
+    }
+
+    setToken(savedToken);
+    fetchBooks(savedToken);
   }, []);
 
   const fetchBooks = async (authToken) => {
@@ -58,7 +69,20 @@ export default function Books() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">📚 Toko Buku</h1>
+      <div className="flex justify-between items-center mb-6">
+  <h1 className="text-3xl font-bold">📚 Admin Dashboard - Toko Buku</h1>
+  <button
+    onClick={() => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      router.push('/login');
+    }}
+    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+  >
+    Logout
+  </button>
+</div>
+
 
       <form onSubmit={handleSubmit} className="mb-8 space-y-4">
         <div>
@@ -103,7 +127,7 @@ export default function Books() {
             required
           />
         </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700">
           Simpan Buku
         </button>
       </form>
