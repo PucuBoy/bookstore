@@ -35,6 +35,21 @@ class User extends Authenticatable
         return $this->role === 'user';
     }
 
+    public function wishlist()
+    {
+        return $this->belongsToMany(Book::class, 'wishlist', 'user_id', 'book_id');
+                    
+    }
+
+    public function cart()
+    {
+        return $this->belongsToMany(Book::class, 'cart', 'user_id', 'book_id');
+                    
+    }
+
+
+
+
     /**
      * The attributes that should be hidden for serialization.
      *

@@ -10,14 +10,28 @@ class BookController extends Controller
     // GET /api/books
     public function index()
     {
-        return Book::all();
+        return Book::with('category')->get();
     }
 
     // POST /api/books
     public function store(Request $request)
     {
-        $book = Book::create($request->all());
-        return response()->json($book, 201);
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'author' => 'required|string',
+            'year' => 'required|integer',
+            'price' => 'required|numeric',
+            'category_id' => 'required|exists:categories,id',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('covers', 'public');
+            $validated['cover_image'] = '/storage/' . $path;
+        }
+
+        $book = Book::create($validated);
+        return response()->json($book->load('category'), 201);
     }
 
     // GET /api/books/{id}
@@ -30,8 +44,22 @@ class BookController extends Controller
     public function update(Request $request, $id)
     {
         $book = Book::findOrFail($id);
-        $book->update($request->all());
-        return response()->json($book, 200);
+
+        $validated = $request->validate([
+            'title' => 'sometimes|required|string',
+            'author' => 'sometimes|required|string',
+            'price' => 'sometimes|required|numeric',
+            'cover_image' => 'nullable|string',
+            'category_id' => 'sometimes|required|exists:categories,id',
+        ]);
+
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('covers', 'public');
+            $validated['cover_image'] = '/storage/' . $path;
+        }
+        
+        $book->update($validated);
+        return response()->json($book->load('category'), 200);
     }
 
     // DELETE /api/books/{id}
